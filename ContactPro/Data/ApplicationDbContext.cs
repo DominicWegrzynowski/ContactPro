@@ -11,6 +11,7 @@ namespace ContactPro.Data
         {
         }
 
-       
+        public virtual DbSet<Contact> Contacts { get; set; } = default!;
+        public virtual DbSet<Category> Categories { get; set; } = default!;
     }
 }
