@@ -5,18 +5,20 @@
     ViewData["Title"] = "Create";
 }
 
-<h1>EDIT CONTACT</h1>
+<h1>CREATE CONTACT</h1>
 <div class="p-3 border border-2 shadow-lg bg-light">
     <form asp-action="Create" asp-controller="Contacts" enctype="multipart/form-data">
         <div class="row g-3 p-2">
             <div class="col-12 col-lg-4">
                 <div class="square-img-container">
-                    <img class="square-img" src="/img/DefaultContactImage.png">
+                    <img id="contactImage" class="square-img" src="/img/DefaultContactImage.png">
                 </div>
                 <div>
-                    <label asp-for="ImageFile" class="control-label"></label>
-                    <input asp-for="ImageFile" class="form-control" accept=".png,.jpg,.jpeg,.gif" />
+                    <input asp-for="ImageFile" class="form-control" accept=".png,.jpg,.jpeg,.gif" onChange="document.getElementById('contactImage').src = window.URL.createObjectURL(this.files[0])" />
                     <span asp-validation-for="ImageFile" class="text-danger"></span>
+                </div>
+                <div class="col-12 col-lg-12 d-flex justify-content-center mt-5">
+                    <button type="submit" class="btn btn-lg btn-primary rounded-pill">Save</button>
                 </div>
             </div>
             <div class="col-12 col-lg-8">
@@ -58,7 +60,7 @@
                     </div>
                     <div class="col-12 col-lg-4 mt-3">
                         <label asp-for="State" class="control-label"></label>
-                        <select asp-for="State" class="form-control"></select>
+                        <select asp-for="State" asp-items="ViewBag.StatesList" class="form-control"></select>
                         <span asp-validation-for="State" class="text-danger"></span>
                     </div>
                     <div class="col-12 col-lg-2 mt-3">
@@ -73,10 +75,7 @@
                     </div>
                     <div class="col-12 col-lg-6 mt-3">
                         <label asp-for="Categories" class="control-label"></label>
-                        <select asp-for="Categories" class="form-control" asp-items="ViewBag.CategoryList" multiple/>
-                    </div>
-                    <div class="col-12 d-flex justify-content-end mt-2">
-                        <button type="submit" class="btn btn-lg btn-primary rounded-pill">Save</button>
+                        <select asp-for="Categories" class="form-control" asp-items="@ViewBag.CategoryList" multiple/>
                     </div>
                 </div>
             </div>
@@ -92,4 +91,4 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-    }
+}
