@@ -59,9 +59,9 @@ namespace ContactPro.Controllers
         public async Task<IActionResult> Create()
         {
             string appUserId = _userManager.GetUserId(User);
+
             //Get values from States enum, cast them into a list and store them as ViewData
             ViewData["StatesList"] = new SelectList(Enum.GetValues(typeof(States)).Cast<States>().ToList());
-
             ViewData["CategoryList"] = new MultiSelectList(await _addressBookService.GetUserCategoriesAsync(appUserId), "Id", "Name");
             
             return View();
@@ -72,7 +72,7 @@ namespace ContactPro.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,FirstName,LastName,BirthDate,Address1,Address2,City,State,ZipCode,Email,PhoneNumber,ImageFile")] Contact contact)
+        public async Task<IActionResult> Create([Bind("Id,FirstName,LastName,BirthDate,Address1,Address2,City,State,ZipCode,Email,PhoneNumber,ImageFile")] Contact contact, List<int> CategoryList)
         {
             //Don't validate AppUserId because it is not coming in from the form
             ModelState.Remove("AppUserId");
@@ -95,6 +95,15 @@ namespace ContactPro.Controllers
 
                 _context.Add(contact);
                 await _context.SaveChangesAsync();
+
+                //loop over all selected categories
+                foreach(int categoryId in CategoryList)
+                {
+                    await _addressBookService.AddContactToCategoryAsync(categoryId, contact.Id);
+                }
+                //save each category selected to the categories contactcategories table
+
+
                 return RedirectToAction(nameof(Index));
             }
 
