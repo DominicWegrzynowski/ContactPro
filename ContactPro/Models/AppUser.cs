@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using NuGet.Common;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -17,6 +18,10 @@ namespace ContactPro.Models
         public string? LastName { get; set; }
 
         [NotMapped]
-        public string? FullName { get { return $"{FirstName} {LastName}"; } } 
+        public string? FullName { get { return $"{FirstName} {LastName}"; } }
+
+        //Virtual Methods
+        public virtual ICollection<Contact> Contacts { get; set; } = new HashSet<Contact>();
+        public virtual ICollection<Category> Categories { get; set; } = new HashSet<Category>();
     }
 }

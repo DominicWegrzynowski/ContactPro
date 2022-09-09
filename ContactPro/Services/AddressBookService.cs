@@ -1,7 +1,9 @@
 ﻿using ContactPro.Data;
 using ContactPro.Models;
 using ContactPro.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Security;
 
 namespace ContactPro.Services
 {
@@ -9,14 +11,16 @@ namespace ContactPro.Services
     {
 
         #region Fields
-        private readonly ApplicationDbContext _context; 
+        private readonly ApplicationDbContext _context;
+        private readonly UserManager<AppUser> _userManager;
         #endregion
 
         #region Constructor
-        public AddressBookService(ApplicationDbContext context)
+        public AddressBookService(ApplicationDbContext context, UserManager<AppUser> userManager)
         {
             _context = context;
-        } 
+            _userManager = userManager;
+        }
         #endregion
 
         #region Add Contact to Category
@@ -45,16 +49,52 @@ namespace ContactPro.Services
         #endregion
 
         #region Get Contact Categories
-        public Task<ICollection<Category>> GetContactCategoriesAsync(int contactId)
+        public async Task<ICollection<Category>> GetContactCategoriesAsync(int contactId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                //Go to categories table, select * categories where c.contactId == contactId
+
+                 Contact? contact = _context.Contacts
+                              .Include(c => c.Categories)
+                              .FirstOrDefault(c => c.Id == contactId);
+
+                //Get categories from contact and return them.
+                List<Category> categories = contact.Categories.ToList();
+
+                return categories;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
         #endregion
 
         #region Get Contact Category Ids
-        public Task<ICollection<int>> GetContactCategoryIdsAsync(int contactId)
+        public async Task<ICollection<int>> GetContactCategoryIdsAsync(int contactId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                Contact? contact = _context.Contacts
+                                           .Include(c => c.Categories)
+                                           .FirstOrDefault(c => c.Id == contactId);
+
+                List<Category> categories = contact.Categories.ToList();
+
+                List<int> categoryIds = new();
+
+                foreach(var category in categories)
+                {
+                    categoryIds.Add(category.Id);
+                }
+
+                return categoryIds;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
         #endregion
 
@@ -102,16 +142,35 @@ namespace ContactPro.Services
         #endregion
 
         #region Remove Contact From Category
-        public Task RemoveContactFromCategory(int categoryId, int contactId)
+        public async Task RemoveContactFromCategory(int categoryId, int contactId)
         {
-            throw new NotImplementedException();
+           throw new NotImplementedException();
         }
         #endregion
 
         #region Search for Contacts
-        public IEnumerable<Contact> SearchForContacts(string searchString, string userId)
+        public async Task<IEnumerable<Contact>> SearchForContacts(string searchString, string userId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                //Go to contacts table,
+                //search for all contacts where one of their properties
+                //contain the searchString and they have a matching userId
+                IEnumerable<Contact>? contacts = 
+                await _context.Contacts.Where(c => (c.FirstName.Contains(searchString) && c.AppUserId == userId) ||
+                                                   (c.LastName.Contains(searchString) && c.AppUserId == userId) ||
+                                                   (c.Email.Contains(searchString) && c.AppUserId == userId) ||
+                                                   (c.ZipCode.Contains(searchString) && c.AppUserId == userId) ||
+                                                   (c.PhoneNumber.Contains(searchString) && c.AppUserId == userId) ||
+                                                   (c.City.Contains(searchString) && c.AppUserId == userId) ||
+                                                   (c.State.ToString().Contains(searchString) && c.AppUserId == userId))
+                                                   .ToListAsync();
+                return contacts;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         } 
         #endregion
     }
