@@ -196,22 +196,19 @@ namespace ContactPro.Services
         {
             try
             {
-
-
-
                 if (!String.IsNullOrEmpty(searchString))
                 {
                     //Go to contacts table,
                     //search for all contacts where one of their properties
                     //contain the searchString and they have a matching userId
                     IEnumerable<Contact>? contacts =
-                    await _context.Contacts.Where(c => (c.FirstName!.ToLower().Contains(searchString) && c.AppUserId == userId) ||
-                                                       (c.LastName!.ToLower().Contains(searchString) && c.AppUserId == userId) ||
-                                                       (c.Email!.ToLower().Contains(searchString) && c.AppUserId == userId) ||
-                                                       (c.ZipCode!.ToLower().Contains(searchString) && c.AppUserId == userId) ||
-                                                       (c.PhoneNumber!.ToLower().Contains(searchString) && c.AppUserId == userId) ||
-                                                       (c.City!.ToLower().Contains(searchString) && c.AppUserId == userId) ||
-                                                       (c.State.ToString().ToLower().Contains(searchString) && c.AppUserId == userId))
+                    await _context.Contacts.Where(c => (c.FirstName!.ToLower().Contains(searchString.ToLower()) && c.AppUserId == userId) ||
+                                                       (c.LastName!.ToLower().Contains(searchString.ToLower()) && c.AppUserId == userId) ||
+                                                       (c.Email!.ToLower().Contains(searchString.ToLower()) && c.AppUserId == userId) ||
+                                                       (c.Address1!.ToLower().Contains(searchString.ToLower()) && c.AppUserId == userId) ||
+                                                       (c.Address2!.ToLower().Contains(searchString.ToLower()) && c.AppUserId == userId) ||
+                                                       (c.City!.ToLower().Contains(searchString.ToLower()) && c.AppUserId == userId) ||
+                                                       (c.PhoneNumber!.ToLower().Contains(searchString.ToLower()) && c.AppUserId == userId))
                                                        .ToListAsync();
                     return contacts; 
                 }
