@@ -55,12 +55,12 @@ namespace ContactPro.Services
             {
                 //Go to categories table, select * categories where c.contactId == contactId
 
-                 Contact? contact = _context.Contacts
+                 Contact? contact = await _context.Contacts
                               .Include(c => c.Categories)
-                              .FirstOrDefault(c => c.Id == contactId);
+                              .FirstOrDefaultAsync(c => c.Id == contactId);
 
                 //Get categories from contact and return them.
-                List<Category> categories = contact.Categories.ToList();
+                List<Category> categories = contact!.Categories.ToList();
 
                 return categories;
             }
@@ -71,16 +71,57 @@ namespace ContactPro.Services
         }
         #endregion
 
+        #region Get User Contacts
+        public IEnumerable<Contact> GetAllUserContacts(string userId)
+        {
+            try
+            {
+                AppUser appUser = _context.Users.Find(userId)!;
+
+                IEnumerable<Contact> contacts = appUser.Contacts.OrderBy(c => c.LastName)
+                                                                    .ThenBy(c => c.FirstName)
+                                                                    .ToList();
+
+                return contacts;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+        #endregion
+
+        #region Get User Contacts By Category
+        public IEnumerable<Contact> GetUserContactsByCategory(string userId, int categoryId)
+        {
+            try
+            {
+                AppUser appUser = _context.Users.Find(userId)!;
+
+                IEnumerable<Contact> contacts = appUser.Categories.FirstOrDefault(c => c.Id == categoryId)!
+                                                       .Contacts.OrderBy(c => c.LastName)
+                                                       .ThenBy(c => c.FirstName)
+                                                       .ToList();
+
+                return contacts;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        } 
+        #endregion
+
         #region Get Contact Category Ids
         public async Task<ICollection<int>> GetContactCategoryIdsAsync(int contactId)
         {
             try
             {
-                Contact? contact = _context.Contacts
+                Contact? contact = await _context.Contacts
                                            .Include(c => c.Categories)
-                                           .FirstOrDefault(c => c.Id == contactId);
+                                           .FirstOrDefaultAsync(c => c.Id == contactId);
 
-                List<Category> categories = contact.Categories.ToList();
+                List<Category> categories = contact!.Categories.ToList();
 
                 List<int> categoryIds = new();
 
@@ -101,18 +142,20 @@ namespace ContactPro.Services
         #region Get User Categories
         public async Task<IEnumerable<Category>> GetUserCategoriesAsync(string userId)
         {
-            List<Category> categories = new List<Category>();
             try
             {
-                categories = await _context.Categories.Where(c => c.AppUserId == userId)
-                                                      .OrderBy(c => c.Name)
-                                                      .ToListAsync();
+                AppUser? appUser = await _context.Users
+                                                 .Include(u => u.Contacts)
+                                                    .ThenInclude(c => c.Categories)
+                                                 .Include(u => u.Categories)
+                                                 .FirstOrDefaultAsync(u => u.Id == userId);
+
+                List<Category> categories = appUser!.Categories.OrderBy(c => c.Name).ToList();
 
                 return categories;
             }
             catch (Exception)
             {
-
                 throw;
             }
         }
@@ -153,19 +196,29 @@ namespace ContactPro.Services
         {
             try
             {
-                //Go to contacts table,
-                //search for all contacts where one of their properties
-                //contain the searchString and they have a matching userId
-                IEnumerable<Contact>? contacts = 
-                await _context.Contacts.Where(c => (c.FirstName.Contains(searchString) && c.AppUserId == userId) ||
-                                                   (c.LastName.Contains(searchString) && c.AppUserId == userId) ||
-                                                   (c.Email.Contains(searchString) && c.AppUserId == userId) ||
-                                                   (c.ZipCode.Contains(searchString) && c.AppUserId == userId) ||
-                                                   (c.PhoneNumber.Contains(searchString) && c.AppUserId == userId) ||
-                                                   (c.City.Contains(searchString) && c.AppUserId == userId) ||
-                                                   (c.State.ToString().Contains(searchString) && c.AppUserId == userId))
-                                                   .ToListAsync();
-                return contacts;
+
+
+
+                if (!String.IsNullOrEmpty(searchString))
+                {
+                    //Go to contacts table,
+                    //search for all contacts where one of their properties
+                    //contain the searchString and they have a matching userId
+                    IEnumerable<Contact>? contacts =
+                    await _context.Contacts.Where(c => (c.FirstName!.ToLower().Contains(searchString) && c.AppUserId == userId) ||
+                                                       (c.LastName!.ToLower().Contains(searchString) && c.AppUserId == userId) ||
+                                                       (c.Email!.ToLower().Contains(searchString) && c.AppUserId == userId) ||
+                                                       (c.ZipCode!.ToLower().Contains(searchString) && c.AppUserId == userId) ||
+                                                       (c.PhoneNumber!.ToLower().Contains(searchString) && c.AppUserId == userId) ||
+                                                       (c.City!.ToLower().Contains(searchString) && c.AppUserId == userId) ||
+                                                       (c.State.ToString().ToLower().Contains(searchString) && c.AppUserId == userId))
+                                                       .ToListAsync();
+                    return contacts; 
+                }
+                else
+                {
+                    return Enumerable.Empty<Contact>();
+                }
             }
             catch (Exception)
             {

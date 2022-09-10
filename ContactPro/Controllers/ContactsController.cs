@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using ContactPro.Models.Enums;
 using ContactPro.Services.Interfaces;
+using AspNetCore;
 
 namespace ContactPro.Controllers
 {
@@ -30,32 +31,43 @@ namespace ContactPro.Controllers
         }
 
         // GET: Contacts
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int categoryId)
         {
 
             List<Contact> contacts = new();
-            List<Category> categories = new();
+            IEnumerable<Category> categories;
             string appUserId = _userManager.GetUserId(User);
 
-            //Return userId & associated contacts and accociated categories
-            
-            AppUser? appUser = _context.Users
-                                    .Include(u => u.Contacts)
-                                    .ThenInclude(c => c.Categories)
-                                    .FirstOrDefault(u => u.Id == appUserId);
+            categories = await _addressBookService.GetUserCategoriesAsync(appUserId);
 
-            if (appUser is not null)
+            //Default category(All Contacts) will return all contacts
+
+            if (categoryId == 0)
             {
-                contacts = appUser.Contacts.OrderBy(c => c.LastName)
-                                           .ThenBy(c => c.FirstName)
-                                           .ToList();
-
-                categories = appUser.Categories.ToList();
-
-                ViewData["CategoryIds"] = new SelectList(categories, "Id", "Name");
-                
+                contacts = _addressBookService.GetAllUserContacts(appUserId).ToList();
             }
+            //Filter by category
+            else
+            {
+                contacts = _addressBookService.GetUserContactsByCategory(appUserId, categoryId).ToList();
+            }
+
+            ViewData["CategoryIds"] = new SelectList(categories, "Id", "Name", 0);
+
             return View(contacts);
+        }
+
+        public async Task<IActionResult> SearchContacts(string searchString)
+        {
+            List<Contact> contacts = new();
+            string appUserId = _userManager.GetUserId(User);
+            IEnumerable<Category> categories = await _addressBookService.GetUserCategoriesAsync(appUserId);
+
+            contacts = (await _addressBookService.SearchForContacts(searchString, appUserId)).ToList();
+           
+            ViewData["CategoryIds"] = new SelectList(categories, "Id", "Name", 0);
+
+            return View(nameof(Index), contacts);
         }
 
         // GET: Contacts/Details/5
